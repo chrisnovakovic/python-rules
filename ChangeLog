@@ -1,3 +1,7 @@
+Version 1.2.1
+-------------
+    * Test for presence of --system option before invoking pip in pip_library
+
 Version 1.2.0
 -------------
     * Allow python_wheel to be run as binary
