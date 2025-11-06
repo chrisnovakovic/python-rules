@@ -1,0 +1,30 @@
+subinclude("///cc//build_defs:c")
+
+package(
+    cc = {
+        "default_dbg_cflags": CONFIG.CC.DEFAULT_DBG_CFLAGS + ["-std=gnu99"],
+        "default_opt_cflags": CONFIG.CC.DEFAULT_OPT_CFLAGS + ["-std=gnu99"],
+    },
+)
+
+c_library(
+    name = "kuba_zip",
+    srcs = ["src/zip.c"],
+    hdrs = ["src/zip.h"],
+    compiler_flags = [
+        "-Isrc",
+        # These need to be set so that miniz can read large zip files.
+        "-D_LARGEFILE64_SOURCE",
+        "-D_FILE_OFFSET_BITS=64",
+        # Disable some unnecessary miniz features to save space.
+        "-DMINIZ_NO_TIME",
+        "-DMINIZ_NO_ZLIB_COMPATIBLE_NAMES",
+    ],
+    labels = [
+        "cc:inc:src",
+    ],
+    private_hdrs = ["src/miniz.h"],
+    visibility = [
+        "@//tools/please_pex/preamble/...",
+    ],
+)

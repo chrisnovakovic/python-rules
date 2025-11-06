@@ -12,22 +12,21 @@ import (
 var log = logging.MustGetLogger("please_pex")
 
 var opts = struct {
-	Usage              string
-	Verbosity          l.Verbosity `short:"v" long:"verbosity" default:"warning" description:"Verbosity of output (higher number = more output)"`
-	Out                string        `short:"o" long:"out" env:"OUT" description:"Output file"`
-	EntryPoint         string        `short:"e" long:"entry_point" env:"SRC" description:"Entry point to pex file"`
-	ModuleDir          string        `short:"m" long:"module_dir" description:"Python module dir to implicitly load modules from"`
-	TestSrcs           []string      `long:"test_srcs" env:"SRCS" env-delim:" " description:"Test source files"`
-	Interpreter        string        `short:"i" long:"interpreter" env:"TOOLS_INTERPRETER" description:"Python interpreter to use"`
-	TestRunner         string        `short:"r" long:"test_runner" default:"unittest" description:"Test runner to use"`
-	Shebang            string        `short:"s" long:"shebang" description:"Explicitly set shebang to this"`
-	Stamp              string        `long:"stamp" description:"Unique value used to derive cache directory for pex"`
-	InterpreterOptions []string      `long:"interpreter_options" description:"Additional command line arguments to pass to the Python interpreter"`
-	Test               bool          `short:"t" long:"test" description:"True if we're to build a test"`
-	Debug              pex.Debugger  `short:"d" long:"debug" optional:"true" optional-value:"pdb" choice:"pdb" choice:"debugpy" description:"Debugger to generate a debugging pex"`
-	Site               bool          `short:"S" long:"site" description:"Allow the pex to import site at startup"`
-	ZipSafe            bool          `long:"zip_safe" description:"Marks this pex as zip-safe"`
-	AddTestRunnerDeps  bool          `long:"add_test_runner_deps" description:"True if test-runner dependencies should be baked into test binaries"`
+	Usage             string
+	Verbosity         l.Verbosity  `short:"v" long:"verbosity" default:"warning" description:"Verbosity of output (higher number = more output)"`
+	Out               string       `short:"o" long:"out" env:"OUT" description:"Output file"`
+	EntryPoint        string       `short:"e" long:"entry_point" env:"SRC" description:"Entry point to pex file"`
+	ModuleDir         string       `short:"m" long:"module_dir" description:"Python module dir to implicitly load modules from"`
+	TestSrcs          []string     `long:"test_srcs" env:"SRCS" env-delim:" " description:"Test source files"`
+	Interpreters      []string     `short:"i" long:"interpreters" required:"true" description:"Python interpreters to attempt to invoke at run-time"`
+	InterpreterArgs   []string     `long:"interpreter_args" description:"Additional command line arguments to pass to the Python interpreter"`
+	TestRunner        string       `short:"r" long:"test_runner" default:"unittest" description:"Test runner to use"`
+	Stamp             string       `long:"stamp" description:"Unique value used to derive cache directory for pex"`
+	Test              bool         `short:"t" long:"test" description:"True if we're to build a test"`
+	Debug             pex.Debugger `short:"d" long:"debug" optional:"true" optional-value:"pdb" choice:"pdb" choice:"debugpy" description:"Debugger to generate a debugging pex"`
+	Site              bool         `short:"S" long:"site" description:"Allow the pex to import site at startup"`
+	ZipSafe           bool         `long:"zip_safe" description:"Marks this pex as zip-safe"`
+	AddTestRunnerDeps bool         `long:"add_test_runner_deps" description:"True if test-runner dependencies should be baked into test binaries"`
 }{
 	Usage: `
 please_pex is a tool to create .pex files for Python.
@@ -42,11 +41,13 @@ func main() {
 	cli.ParseFlagsOrDie("please_pex", &opts, nil)
 	l.InitLogging(opts.Verbosity)
 	w := pex.NewWriter(
-		opts.EntryPoint, opts.Interpreter, opts.InterpreterOptions, opts.Stamp,
-		opts.ZipSafe, !opts.Site)
-	if opts.Shebang != "" {
-		w.SetShebang(opts.Shebang, opts.InterpreterOptions)
-	}
+		opts.EntryPoint,
+		opts.Interpreters,
+		opts.InterpreterArgs,
+		opts.Stamp,
+		opts.ZipSafe,
+		!opts.Site,
+	)
 	if opts.Test {
 		w.SetTest(opts.TestSrcs, opts.TestRunner, opts.AddTestRunnerDeps)
 	}

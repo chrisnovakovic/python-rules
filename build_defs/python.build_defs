@@ -94,8 +94,8 @@ def python_library(name:str, srcs:list=[], resources:list=[], deps:list=[], visi
 def python_binary(name:str, main:str, srcs:list=[], resources:list=[], out:str=None, deps:list=[],
                   data:list=None, visibility:list=None, test_only:bool=False, zip_safe:bool=None,
                   site:bool=False, strip:bool=False, interpreter:str=CONFIG.PYTHON.DEFAULT_INTERPRETER,
-                  shebang:str=CONFIG.PYTHON.DEFAULT_SHEBANG, module_dir:str=CONFIG.PYTHON.MODULE_DIR,
-                  labels:list&features&tags=[]):
+                  runtime_interpreters:list=None, runtime_interpreter_args:list=None,
+                  module_dir:str=CONFIG.PYTHON.MODULE_DIR, labels:list&features&tags=[]):
     """Generates a Python binary target.
 
     This compiles all source files together into a single .pex file which can
@@ -123,11 +123,19 @@ def python_binary(name:str, main:str, srcs:list=[], resources:list=[], out:str=N
       strip (bool): Strips source code from the output .pex file, leaving just bytecode.
       site (bool): Allows the Python interpreter to import site; conversely if False, it will be
                    started with the -S flag to avoid importing site.
-      interpreter (str): The Python interpreter to use. Defaults to the value of the
-                         Python.DefaultInterpreter setting.
-      shebang (str): Exact shebang to apply to the generated file. Defaults to the value
-                     of the python.defaultshebang setting, if not set we will
-                     determine something appropriate for the given interpreter.
+      interpreter (str): The path to the Python interpreter with which to compile the Python source
+                         files. Defaults to the value of the DefaultInterpreter plugin configuration
+                         option.
+      runtime_interpreters (list): A list of possible paths to Python interpreters with which to run
+                                   the generated .pex file. At run time, the leftmost element containing
+                                   a path to an executable file will be chosen. If unspecified, the
+                                   value of the DefaultRuntimeInterpreters plugin configuration option
+                                   will be used; if that is unspecified, the value of the interpreter
+                                   parameter will be used (meaning that the interpreter used to compile
+                                   the sources must exist at the same path in the run-time environment).
+      runtime_interpreter_args (list): A list of additional arguments to pass to the Python interpreter
+                                       when running the generated .pex file. Defaults to the value of
+                                       the DefaultRuntimeInterpreterArgs plugin configuration option.
       module_dir (str): The path to the third party python directory in python import path format.
                      Defaults to value of python.moduledir setting.
       labels (list): Labels to apply to this rule.
@@ -145,11 +153,9 @@ def python_binary(name:str, main:str, srcs:list=[], resources:list=[], out:str=N
         test_only=test_only,
     )
 
-    shebang = shebang or _interpreter_cmd(interpreter)
+    interpreter_opts, interpreter_data = _pex_interpreter(interpreter, runtime_interpreters, runtime_interpreter_args, test=False)
     zipsafe_flag = '' if zip_safe is False else '--zip_safe'
-    interpreter_opts = _interpreter_opts(CONFIG.PYTHON.INTERPRETER_OPTIONS)
-    cmd = '$TOOLS_PEX -s "%s" -m "%s" %s %s' % (
-        shebang, module_dir, zipsafe_flag, interpreter_opts)
+    cmd = '$TOOLS_PEX -m "%s" %s %s' % (module_dir, zipsafe_flag, interpreter_opts)
 
     # If content hashing feature flag is enabled, we use the hash of the built
     # dependencies instead of the RULE_HASH as the base of the pex extraction
@@ -186,7 +192,7 @@ def python_binary(name:str, main:str, srcs:list=[], resources:list=[], out:str=N
     )
 
     # This rule concatenates the .pex with all the other precompiled zip files from dependent rules.
-    cmd = '$TOOL z -i . -s .pex.zip -s .whl --preamble_from="$SRC" --include_other --add_init_py --strict'
+    cmd = '$TOOL z --include "$SRC" -i . -s .pex.zip -s .whl --preamble_from "$SRC" --include_other --add_init_py --strict'
     if strip:
         cmd += ' --strip_py'
 
@@ -197,7 +203,7 @@ def python_binary(name:str, main:str, srcs:list=[], resources:list=[], out:str=N
         srcs=[pex_rule],
         deps=[lib_rule],
         outs=[out or (name + '.pex')],
-        data=data,
+        data=_pex_data(data, interpreter_data),
         cmd=cmd,
         debug_cmd=debug_cmd,
         needs_transitive_deps=True,
@@ -223,8 +229,8 @@ def python_test(name:str, srcs:list, data:list|dict=[], resources:list=[], deps:
                 labels:list&features&tags=[], size:str=None, flags:str='', visibility:list=None,
                 sandbox:bool=None, timeout:int=0, flaky:bool|int=0, env:dict=None,
                 test_outputs:list=None, zip_safe:bool=None, interpreter:str=CONFIG.PYTHON.DEFAULT_INTERPRETER,
-                site:bool=False, test_runner:str=None, shebang:str=CONFIG.PYTHON.DEFAULT_SHEBANG,
-                module_dir:str=CONFIG.PYTHON.MODULE_DIR):
+                runtime_interpreters:list=None, runtime_interpreter_args:list=None,
+                site:bool=False, test_runner:str=None, module_dir:str=CONFIG.PYTHON.MODULE_DIR):
     """Generates a Python test target.
 
     This works very similarly to python_binary; it is also a single .pex file
@@ -257,11 +263,19 @@ def python_test(name:str, srcs:list, data:list|dict=[], resources:list=[], deps:
                        If set to explicitly True or False, the output will be marked
                        appropriately; by default it will be safe unless any of the
                        transitive dependencies are themselves marked as not zip-safe.
-      interpreter (str): The Python interpreter to use. Defaults to the value of the
-                         Python.DefaultInterpreter setting.
-      shebang (str): Exact shebang to apply to the generated file. Defaults to the value
-                     of the python.defaultshebang setting, if not set we will
-                     determine something appropriate for the given interpreter.
+      interpreter (str): The path to the Python interpreter with which to compile the Python source
+                         files. Defaults to the value of the DefaultInterpreter plugin configuration
+                         option.
+      runtime_interpreters (list): A list of possible paths to Python interpreters with which to run
+                                   the generated .pex file. At run time, the leftmost element containing
+                                   a path to an executable file will be chosen. If unspecified, the
+                                   value of the DefaultRuntimeInterpreters plugin configuration option
+                                   will be used; if that is unspecified, the value of the interpreter
+                                   parameter will be used (meaning that the interpreter used to compile
+                                   the sources must exist at the same path in the run-time environment).
+      runtime_interpreter_args (list): A list of additional arguments to pass to the Python interpreter
+                                       when running the generated .pex file. Defaults to the value of
+                                       the DefaultRuntimeInterpreterArgs plugin configuration option.
       module_dir (str): The path to the third party python directory in python import path format.
                      Defaults to value of python.moduledir setting.
       site (bool): Allows the Python interpreter to import site; conversely if False, it will be
@@ -270,9 +284,12 @@ def python_test(name:str, srcs:list, data:list|dict=[], resources:list=[], deps:
                          `unittest`, `pytest`, or a custom test runner entry point.
     """
     test_runner = test_runner or CONFIG.PYTHON.TEST_RUNNER
-    shebang = shebang or _interpreter_cmd(interpreter)
-    interpreter_opts = _interpreter_opts(CONFIG.PYTHON.INTERPRETER_OPTIONS)
-    cmd = f'$TOOLS_PEX -t -s "{shebang}" -m "{module_dir}" -r "{test_runner}" --zip_safe --add_test_runner_deps {interpreter_opts} --stamp="$RULE_HASH"'
+    interpreter_opts, interpreter_data = _pex_interpreter(interpreter, runtime_interpreters, runtime_interpreter_args, test=True)
+    cmd = '$TOOLS_PEX -t -m "%s" -r "%s" --zip_safe --add_test_runner_deps %s --stamp="$RULE_HASH"' % (
+        module_dir,
+        test_runner,
+        interpreter_opts,
+    )
     if site:
         cmd += ' -S'
 
@@ -326,7 +343,7 @@ def python_test(name:str, srcs:list, data:list|dict=[], resources:list=[], deps:
 
     deps = [pex_rule, lib_rule]
 
-    test_cmd = f'$TOOL $TEST {flags}' if site else f'$TOOL -S $TEST {flags}'
+    test_cmd = f'$TEST {flags}' if site else f'$TEST {flags}'
     worker_cmd = f'$(worker {worker})' if worker else ""
     if worker_cmd:
         test_cmd = f'{worker_cmd} && {test_cmd} '
@@ -350,10 +367,10 @@ def python_test(name:str, srcs:list, data:list|dict=[], resources:list=[], deps:
         name=name,
         srcs=[pex_rule],
         deps=deps,
-        data=data,
+        data=_pex_data(data, interpreter_data),
         outs=[f'{name}.pex'],
         labels=labels + ['test_results_dir'],
-        cmd='$TOOL z -i . -s .pex.zip -s .whl --preamble_from="$SRC" --include_other --add_init_py --strict',
+        cmd='$TOOL z --include "$SRC" -i . -s .pex.zip -s .whl --preamble_from "$SRC" --include_other --add_init_py --strict',
         test_cmd=test_cmd,
         debug_cmd=debug_cmd,
         needs_transitive_deps=True,
@@ -368,9 +385,8 @@ def python_test(name:str, srcs:list, data:list|dict=[], resources:list=[], deps:
         flaky=flaky,
         env=env,
         test_outputs=test_outputs,
-        requires=['py', 'test', interpreter],
+        requires=['py', 'test'],
         tools=[CONFIG.ARCAT_TOOL],
-        test_tools = [interpreter],
     )
 
 
@@ -744,12 +760,45 @@ def _wheel_entrypoint_binary(name:str, entrypoint:str, lib_rule, visibility, tes
         visibility = visibility,
     )
 
-def _interpreter_cmd(interpreter:str):
-    return f'$(out {interpreter})' if looks_like_build_label(interpreter) else interpreter
+
+def _pex_interpreter(build_interp:str, run_interps:list, run_args:list, test:bool=False):
+    """Returns a string of please_pex options defining the run-time Python interpreter paths and
+    arguments to pass to the interpreter during invocation (falling back to default values where
+    necessary), and a list containing the names of the subset of those interpreters that are defined
+    as build targets.
+    """
+    rel_root = "/".join([".." for _ in package_name().split("/")])
+    opts = []
+    targets = []
+    for i in (run_interps or CONFIG.PYTHON.DEFAULT_RUNTIME_INTERPRETERS or [build_interp]):
+        if looks_like_build_label(i):
+            # python_binary and python_test outputs should look for an interpreter defined by a
+            # build target at its path relative to the root of the build environment, but Please
+            # copies the python_binary and python_test outputs themselves to different locations:
+            # test binaries are copied to the build environment's root directory, whereas non-test
+            # binaries are copied to a subdirectory named after the target's package name. Make
+            # sure the correct path is embedded for the rule that invoked this function.
+            opts += [f"--interpreters='$ORIGIN/$(location {i})'"] if test else [f"--interpreters='$ORIGIN/{rel_root}/$(location {i})'"]
+            targets += [i]
+        else:
+            opts += [f"--interpreters='{i}'"]
+    opts += [
+        f"--interpreter_args='{a}'"
+        for a in (run_args or CONFIG.PYTHON.DEFAULT_RUNTIME_INTERPRETER_ARGS or [])
+    ]
+    return " ".join(opts), targets
 
 
-def _interpreter_opts(opts:list):
-    return " ".join([f'--interpreter_options="{o}"' for o in opts])
+def _pex_data(data:list|dict=[], interpreter_data:list=[]):
+    """Concatenates the data passed to the python_binary or python_test rule with additional data
+    defining the Python interpreter build targets that should be available to the generated target
+    at run time.
+    """
+    data = data or []
+    interpreter_data = interpreter_data or []
+    if isinstance(data, list):
+        return data + interpreter_data
+    return data | {"_plz_python_runtime_interpreters": interpreter_data}
 
 
 def _patch_cmd(patch):

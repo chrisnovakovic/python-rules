@@ -23,8 +23,8 @@ e2e_test_plugin(
         "//build_defs:archs",
         "//build_defs:python",
         "//build_defs:version",
-        "//tools:please_pex",
         "//:plzconfig",
+        CONFIG.PYTHON.PEX_TOOL,
     ],
     visibility = [
         "//test/...",
@@ -192,6 +192,12 @@ python_test(
         "//third_party/python:confluent-kafka",
     ],
     labels = ["manual"],
+)
+
+genrule(
+    name = "runtime_interpreter_present_test",
+    srcs = [":strip_source"],
+    cmd = "true",
 )
 
 plugin_e2e_test(

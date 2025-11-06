@@ -1,0 +1,16 @@
+subinclude("///cc//build_defs:c")
+
+c_library(
+    name = "log_c",
+    srcs = ["src/log.c"],
+    hdrs = ["src/log.h"],
+    compiler_flags = [
+        "-Isrc",
+    ],
+    labels = [
+        "cc:inc:src",
+    ],
+    visibility = [
+        "@//tools/please_pex/preamble/...",
+    ],
+)
