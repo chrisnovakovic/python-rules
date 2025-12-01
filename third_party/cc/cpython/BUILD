@@ -56,18 +56,28 @@ _freebsd_ports_hashes = {
 for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
     if CONFIG.OS == "freebsd":
         minorint = int(minor.rpartition(".")[2])
-        package = filter(lambda v: v.startswith("python" + minor.replace(".", "")), _freebsd_ports_hashes.keys())[0]
 
-        download = remote_file(
-            name = tag(f"cpython_{minor}", "download"),
-            url = f"https://pkg.freebsd.org/FreeBSD:14:amd64/latest/All/{package}.pkg",
+        python_pkg = remote_file(
+            name = tag(f"cpython_{minor}", "python_pkg"),
+            url = "https://pkg.freebsd.org/FreeBSD:14:amd64/latest/All/%s.pkg" % (
+                filter(lambda v: v.startswith("python" + minor.replace(".", "") + "-"), _freebsd_ports_hashes.keys())[0],
+            ),
+            hashes = [_freebsd_ports_hashes[package]],
+        )
+
+        python_sqlite3_pkg = remote_file(
+            name = tag(f"cpython_{minor}", "python_sqlite3_pkg"),
+            url = "https://pkg.freebsd.org/FreeBSD:14:amd64/latest/All/%s.pkg" % (
+                filter(lambda v: v.startswith("py" + minor.replace(".", "") + "-sqlite3"), _freebsd_ports_hashes.keys())[0],
+            ),
             hashes = [_freebsd_ports_hashes[package]],
         )
 
         genrule(
             name = f"cpython_{minor}",
             srcs = {
-                "python": [download],
+                "python": [python_pkg],
+                "python_sqlite3": [python_sqlite3_pkg],
                 "setuptools": ["//third_party/python:setuptools"] if minorint < 12 else [],
                 "wheel": ["//third_party/python:wheel"] if minorint < 12 else [],
                 "pip": ["//third_party/python:pip"],
@@ -76,6 +86,7 @@ for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
             cmd = [
                 "mkdir $OUTS",
                 "tar -C $OUTS -xf $SRCS_PYTHON --strip-components=3 /usr/local",
+                "tar -C $OUTS -xf $SRCS_PYTHON_SQLITE3 --strip-components=3 /usr/local",
                 # The contents of FreeBSD Ports packages are designed to be installed beneath /usr/local, so we'll have
                 # to do some slightly hacky rpath editing to make sure the Python interpreter can find libpython3.x at
                 # run time:
