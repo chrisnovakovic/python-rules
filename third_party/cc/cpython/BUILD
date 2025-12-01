@@ -85,9 +85,9 @@ for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
                 # each interpreter - ensurepip is stripped out of Ports' python31* packages, and Ports currently
                 # contains only a single pip package for the default Python version.
                 f"mkdir -p $OUTS/lib/python{minor}/site-packages",
-                f"mv $SRCS_SETUPTOOLS $OUTS/lib/python{minor}/site-packages" if minorint < 12 else "true",
-                f"mv $SRCS_WHEEL $OUTS/lib/python{minor}/site-packages" if minorint < 12 else "true",
-                f"mv $SRCS_PIP $OUTS/lib/python{minor}/site-packages",
+                f"unzip $SRCS_SETUPTOOLS -d $OUTS/lib/python{minor}/site-packages" if minorint < 12 else "true",
+                f"unzip $SRCS_WHEEL -d $OUTS/lib/python{minor}/site-packages" if minorint < 12 else "true",
+                f"unzip $SRCS_PIP -d $OUTS/lib/python{minor}/site-packages",
             ],
             binary = True,
             entry_points = {
