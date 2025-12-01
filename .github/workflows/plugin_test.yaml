@@ -56,7 +56,7 @@ jobs:
           environment_variables: PLZ_ARGS
           shutdown_vm: true
           run: |
-            _external_interpreter="python${{ steps.python.outputs.python-path }}"
+            _external_interpreter="python${{ inputs.python }}"
             _in_repo_interpreter="//third_party/cc/cpython:cpython_${{ inputs.python }}|python"
             echo "*** Running tests using external Python interpreter: $_external_interpreter"
             ./pleasew -o "plugin.python.defaultinterpreter:$_external_interpreter" test --rerun --keep_going --log_file plz-out/log/test-external_interpreter.log ${{ inputs.test_targets }}
@@ -65,7 +65,7 @@ jobs:
       - name: Run tests (on host)
         if: ${{ inputs.platform != 'freebsd_amd64' }}
         run: |
-          _external_interpreter="python${{ steps.python.outputs.python-path }}"
+          _external_interpreter="${{ steps.python.outputs.python-path }}"
           _in_repo_interpreter="//third_party/cc/cpython:cpython_${{ inputs.python }}|python"
           echo "*** Running tests using external Python interpreter: $_external_interpreter"
           ./pleasew -o "plugin.python.defaultinterpreter:$_external_interpreter" test --rerun --keep_going --log_file plz-out/log/test-external_interpreter.log ${{ inputs.test_targets }}
