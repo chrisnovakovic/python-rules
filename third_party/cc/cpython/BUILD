@@ -96,7 +96,6 @@ for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
             tools = {
                 "patchelf": "//third_party/cc/patchelf",
             },
-            test_only = True,
             visibility = ["PUBLIC"],
         )
     else:

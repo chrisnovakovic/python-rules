@@ -201,8 +201,8 @@ python_wheel(
     ],
     hashes = ["9655943313a94722b7774661c21049070f6bbb0a1516bf02f7c8d5d9201514cd"],
     licences = ["MIT"],
-    test_only = True,
     version = "25.3",
+    visibility = ["//third_party/cc/cpython/..."],
 )
 
 python_wheel(
@@ -216,8 +216,8 @@ python_wheel(
     ],
     hashes = ["062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922"],
     licences = ["MIT"],
-    test_only = True,
     version = "80.9.0",
+    visibility = ["//third_party/cc/cpython/..."],
 )
 
 python_wheel(
@@ -228,8 +228,8 @@ python_wheel(
     ],
     hashes = ["708e7481cc80179af0e556bbf0cc00b8444c7321e2700b8d8580231d13017248"],
     licences = ["MIT"],
-    test_only = True,
     version = "0.45.1",
+    visibility = ["//third_party/cc/cpython/..."],
 )
 
 python_wheel(
