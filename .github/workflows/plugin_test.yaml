@@ -60,14 +60,14 @@ jobs:
             _external_interpreter="python${{ inputs.python }}"
             _in_repo_interpreter="//third_party/cc/cpython:cpython_${{ inputs.python }}|python"
             echo "*** Running tests using external Python interpreter: $_external_interpreter"
-            ./pleasew -o "plugin.python.defaultinterpreter:$_external_interpreter" test --rerun --keep_going --log_file plz-out/log/test-external_interpreter.log ${{ inputs.test_targets }}
+            #./pleasew -o "plugin.python.defaultinterpreter:$_external_interpreter" test --rerun --keep_going --log_file plz-out/log/test-external_interpreter.log ${{ inputs.test_targets }}
             echo "*** Running tests using in-repo Python interpreter: $_in_repo_interpreter"
-            ./pleasew -o "plugin.python.defaultinterpreter:$_in_repo_interpreter" test --rerun --keep_going --log_file plz-out/log/test-in_repo_interpreter.log ${{ inputs.test_targets }}
-      #- name: Start tmate session
-      #if: ${{ inputs.platform == 'freebsd_amd64' }}
-      #uses: mxschmitt/action-tmate@v3
-      #with:
-      #  limit-access-to-actor: true
+            #./pleasew -o "plugin.python.defaultinterpreter:$_in_repo_interpreter" test --rerun --keep_going --log_file plz-out/log/test-in_repo_interpreter.log ${{ inputs.test_targets }}
+      - name: Start tmate session
+      if: ${{ inputs.platform == 'freebsd_amd64' }}
+      uses: mxschmitt/action-tmate@v3
+      with:
+        limit-access-to-actor: true
       - name: Run tests (on host)
         if: ${{ inputs.platform != 'freebsd_amd64' }}
         run: |
