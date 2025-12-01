@@ -5,7 +5,7 @@ _python_build_standalone_release = "20251031"
 _python_build_standalone_hashes = {
     "3.10.19": {
         "aarch64-apple-darwin": "24be196d33ee1b40393beff9df721ed596ec90b8be3f424122f1300f41a4a3b6",
-        "aarch64-unknown-linux-gnu": "ed1840fa7baa762d3506c161ee1887c29c3603737058a22639cd88ed69e4be9d",
+        "aarch64-unknown-linux-gnu": "a04c0cf04f45b6f8966f693beef5b3929d88978a04de4a6ec0bf330d71e0ffd1",
         "aarch64-unknown-linux-musl": "e2ddd1e8980ecba2221074b9e3fccd10d0fbf1994974250eb537b066a0879e04",
         "x86_64-apple-darwin": "5f3a156f063f4a6fa522b1ebb724a7554a67be32318b69041e83fd77a2bd761c",
         "x86_64_v2-unknown-linux-gnu": "e5fe6913158b40b5ac897897c51c5879cac2684c435bf217774200fb863c9660",

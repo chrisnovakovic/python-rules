@@ -137,21 +137,20 @@ python_test(
     data = {"txt": ["data.txt"]},
 )
 
-# TODO(chrisnovakovic): re-enable
-#plugin_e2e_test(
-#    name = "pip_libary_zip_safe_label_test",
-#    repo = "zip_safe_label_repo",
-#    test_cmd = [
-#        "plz query print -f labels //third_party/python:safe > safe",
-#        "plz query print -f labels //third_party/python:safe_implicit > safe_implicit",
-#        "plz query print -f labels //third_party/python:unsafe > unsafe",
-#    ],
-#    expected_output = {
-#        "safe": "py\npip:safe==1.0.0",
-#        "safe_implicit": "py\npip:safe_implicit==1.0.0",
-#        "unsafe": "py\npip:unsafe==1.0.0\npy:zip-unsafe",
-#    },
-#)
+plugin_e2e_test(
+    name = "pip_libary_zip_safe_label_test",
+    repo = "zip_safe_label_repo",
+    test_cmd = [
+        "plz query print -f labels //third_party/python:safe > safe",
+        "plz query print -f labels //third_party/python:safe_implicit > safe_implicit",
+        "plz query print -f labels //third_party/python:unsafe > unsafe",
+    ],
+    expected_output = {
+        "safe": "py\npip:safe==1.0.0",
+        "safe_implicit": "py\npip:safe_implicit==1.0.0",
+        "unsafe": "py\npip:unsafe==1.0.0\npy:zip-unsafe",
+    },
+)
 
 # Test that python_wheel targets can have name_scheme as a list or a string
 
@@ -201,14 +200,13 @@ genrule(
     cmd = "true",
 )
 
-# TODO(chrisnovakovic): re-enable
-#plugin_e2e_test(
-#    name = "interpreter_options_test",
-#    repo = "interpreter_options_repo",
-#    test_cmd = [
-#        "plz run //:binary > binary",
-#    ],
-#    expected_output = {
-#        "binary": "Executed plzmodule.py",
-#    },
-#)
+plugin_e2e_test(
+    name = "interpreter_options_test",
+    repo = "interpreter_options_repo",
+    test_cmd = [
+        "plz run //:binary > binary",
+    ],
+    expected_output = {
+        "binary": "Executed plzmodule.py",
+    },
+)

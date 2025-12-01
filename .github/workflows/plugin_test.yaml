@@ -44,6 +44,11 @@ jobs:
         # environment - skip the e2e tests if we're using //tools/please_pex as the pex tool.
         run: |
           echo "PLZ_ARGS=${PLZ_ARGS:+$PLZ_ARGS }-o plugin.python.pextool://tools/please_pex -e plz_e2e_test" >> $GITHUB_ENV
+      - name: Start tmate session
+        if: ${{ inputs.platform == 'freebsd_amd64' }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          limit-access-to-actor: true
       - name: Run tests (in nested runner)
         if: ${{ inputs.platform == 'freebsd_amd64' }}
         uses: cross-platform-actions/action@v0.30.0
