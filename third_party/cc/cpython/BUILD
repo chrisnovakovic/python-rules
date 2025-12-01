@@ -46,6 +46,11 @@ _python_build_standalone_hashes = {
 }
 
 _freebsd_ports_hashes = {
+    "py310-sqlite3-3.10.19_10": "61a51cdbbfacfebfc248ebb00288f93f5f3f575bf97f2db11293a5b4d005ac8d",
+    "py311-sqlite3-3.11.14_10": "79e883f79971e6d08293c3f44a4b88a197d8300a2f873f83829e2c028eeeaee2",
+    "py312-sqlite3-3.12.12_10": "64d9074b1664e17e619327c54faf18dfeca5b8f6c8ee988bb094e6241d101070",
+    "py313-sqlite3-3.13.9_10": "86e286e500a226e8ff26e51be1521e44505f6e472565a9457f80f1b428e5d378",
+    "py314-sqlite3-3.14.0_10": "fa487c001557053ce40801fb0234ef457d1b21becc9223b750d0c1917d7cf012",
     "python310-3.10.19": "1e06d1552d0d7a377606a0855bd13926261d59dffd18eb9a60ec97f64860ffc9",
     "python311-3.11.14": "b371de2a4a4137f8176b118f24d328fc12e4e9280071f6282db1c182e083b6b2",
     "python312-3.12.12_2": "a2cb0fa91ff0b6ca7aea19466c2c779416a6cb1e6cb56b43c64e33237e207778",
@@ -57,20 +62,19 @@ for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
     if CONFIG.OS == "freebsd":
         minorint = int(minor.rpartition(".")[2])
 
+        python_pkg_name = filter(lambda v: v.startswith("python" + minor.replace(".", "") + "-"), _freebsd_ports_hashes.keys())[0]
+        python_sqlite3_pkg_name = filter(lambda v: v.startswith("py" + minor.replace(".", "") + "-sqlite3"), _freebsd_ports_hashes.keys())[0]
+
         python_pkg = remote_file(
             name = tag(f"cpython_{minor}", "python_pkg"),
-            url = "https://pkg.freebsd.org/FreeBSD:14:amd64/latest/All/%s.pkg" % (
-                filter(lambda v: v.startswith("python" + minor.replace(".", "") + "-"), _freebsd_ports_hashes.keys())[0],
-            ),
-            hashes = [_freebsd_ports_hashes[package]],
+            url = f"https://pkg.freebsd.org/FreeBSD:14:amd64/latest/All/{python_pkg_name}.pkg",
+            hashes = [_freebsd_ports_hashes[python_pkg_name]],
         )
 
         python_sqlite3_pkg = remote_file(
             name = tag(f"cpython_{minor}", "python_sqlite3_pkg"),
-            url = "https://pkg.freebsd.org/FreeBSD:14:amd64/latest/All/%s.pkg" % (
-                filter(lambda v: v.startswith("py" + minor.replace(".", "") + "-sqlite3"), _freebsd_ports_hashes.keys())[0],
-            ),
-            hashes = [_freebsd_ports_hashes[package]],
+            url = f"https://pkg.freebsd.org/FreeBSD:14:amd64/latest/All/{python_sqlite3_pkg_name}.pkg",
+            hashes = [_freebsd_ports_hashes[python_sqlite3_pkg_name]],
         )
 
         genrule(
