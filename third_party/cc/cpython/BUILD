@@ -73,7 +73,7 @@ for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
                 # The contents of FreeBSD Ports packages are designed to be installed beneath /usr/local, so we'll have
                 # to do some slightly hacky rpath editing to make sure the Python interpreter can find libpython3.x at
                 # run time:
-                "chmod +w $OUTS/bin/python{minor}",
+                f"chmod +w $OUTS/bin/python{minor}",
                 f"$TOOLS_PATCHELF --set-rpath '$ORIGIN/../lib' $OUTS/bin/python{minor}",
             ],
             binary = True,
