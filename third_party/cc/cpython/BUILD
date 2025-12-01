@@ -55,6 +55,7 @@ _freebsd_ports_hashes = {
 
 for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
     if CONFIG.OS == "freebsd":
+        minorint = int(minor.rpartition(".")[2])
         package = filter(lambda v: v.startswith("python" + minor.replace(".", "")), _freebsd_ports_hashes.keys())[0]
 
         download = remote_file(
@@ -65,16 +66,28 @@ for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
 
         genrule(
             name = f"cpython_{minor}",
-            srcs = [download],
+            srcs = {
+                "python": [download],
+                "setuptools": ["//third_party/python:setuptools"] if minorint < 12 else [],
+                "wheel": ["//third_party/python:wheel"] if minorint < 12 else [],
+                "pip": ["//third_party/python:pip"],
+            },
             outs = [f"python_{minor}"],
             cmd = [
                 "mkdir $OUTS",
-                "tar -C $OUTS -xf $SRCS --strip-components=3 /usr/local",
+                "tar -C $OUTS -xf $SRCS_PYTHON --strip-components=3 /usr/local",
                 # The contents of FreeBSD Ports packages are designed to be installed beneath /usr/local, so we'll have
                 # to do some slightly hacky rpath editing to make sure the Python interpreter can find libpython3.x at
                 # run time:
                 f"chmod +w $OUTS/bin/python{minor}",
                 f"$TOOLS_PATCHELF --set-rpath '$ORIGIN/../lib' $OUTS/bin/python{minor}",
+                # Manually download and install pip (and, on Python < 3.12, its dependencies, setuptools and wheel) for
+                # each interpreter - ensurepip is stripped out of Ports' python31* packages, and Ports currently
+                # contains only a single pip package for the default Python version.
+                f"mkdir -p $OUTS/lib/python{minor}/site-packages",
+                f"mv $SRCS_SETUPTOOLS $OUTS/lib/python{minor}/site-packages" if minorint < 12 else "true",
+                f"mv $SRCS_WHEEL $OUTS/lib/python{minor}/site-packages" if minorint < 12 else "true",
+                f"mv $SRCS_PIP $OUTS/lib/python{minor}/site-packages",
             ],
             binary = True,
             entry_points = {
@@ -83,6 +96,7 @@ for minor in ["3.10", "3.11", "3.12", "3.13", "3.14"]:
             tools = {
                 "patchelf": "//third_party/cc/patchelf",
             },
+            test_only = True,
             visibility = ["PUBLIC"],
         )
     else:
