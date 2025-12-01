@@ -2,7 +2,7 @@ _PLEASE_PEX_VERSION = "2.2.0"
 
 remote_file(
     name = "please_pex",
-    url = f"https://github.com/chrisnovakovic/python-rules/releases/download/please_pex-v{_PLEASE_PEX_VERSION}/please_pex-{_PLEASE_PEX_VERSION}-{CONFIG.OS}_{CONFIG.ARCH}",
+    url = f"https://github.com/please-build/python-rules/releases/download/please_pex-v{_PLEASE_PEX_VERSION}/please_pex-{_PLEASE_PEX_VERSION}-{CONFIG.OS}_{CONFIG.ARCH}",
     hashes = [
         "692069ea340d6ea741062e7ea1da4fed454ec761e397bde1f2acfcb9f2b18756",  # darwin_amd64
         "75299030c146fcf50e406cbf7746cd1e678340d438c4e4a3bd74a47148435dbc",  # darwin_arm64
