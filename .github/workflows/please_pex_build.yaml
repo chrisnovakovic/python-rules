@@ -23,4 +23,5 @@ jobs:
           name: please_pex_${{ inputs.platform }}
           path: ${{ env.ARTIFACT_PATH }}
           if-no-files-found: error
+          compression-level: 9
           retention-days: 1
