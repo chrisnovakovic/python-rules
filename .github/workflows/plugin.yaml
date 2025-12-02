@@ -28,7 +28,7 @@ jobs:
           - '3.13'
           - '3.14'
   test-please_pex:
-    name: Test (${{ matrix.platform}}, Python ${{ matrix.python }}, in-repo please_pex)
+    name: Test please_pex
     uses: ./.github/workflows/plugin_test.yaml
     with:
       platform: ${{ matrix.platform }}
@@ -74,8 +74,8 @@ jobs:
   build-please_pex-artifacts:
     name: Build please_pex release artifacts
     #if: github.ref == 'refs/heads/master'
-    needs:
-      - test-please_pex
+    #needs:
+    #  - test-please_pex
     uses: ./.github/workflows/please_pex_build.yaml
     with:
       platform: ${{ matrix.platform }}
