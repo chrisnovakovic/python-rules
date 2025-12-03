@@ -1,3 +1,7 @@
+Version 3.0.0
+-------------
+    * New major release
+
 Version 2.2.0
 -------------
     * Don't require a please_pex binary in order to build please_pex from source (#266)
