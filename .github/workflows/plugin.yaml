@@ -4,7 +4,7 @@ on:
   - pull_request
 jobs:
   test-wheel_resolver:
-    if: ${{ 'TODO: remove' == false }}
+    if: false
     name: Test wheel_resolver (${{ matrix.platform }}, Python ${{ matrix.python }})
     uses: ./.github/workflows/plugin_test.yaml
     with:
@@ -51,7 +51,7 @@ jobs:
           - '3.13'
           - '3.14'
   test:
-    if: ${{ 'TODO: remove' == false }}
+    if: false
     name: Test (${{ matrix.platform}}, Python ${{ matrix.python }}, stable please_pex release)
     uses: ./.github/workflows/plugin_test.yaml
     with:
