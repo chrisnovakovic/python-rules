@@ -1,3 +1,11 @@
+Version 3.0.2
+-------------
+    * Dummy
+
+Version 3.0.1
+-------------
+    * Dummy
+
 Version 3.0.0
 -------------
     * Upgrade pytest to 9.0.1 (#285)
