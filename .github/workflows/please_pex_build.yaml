@@ -8,15 +8,50 @@ on:
 jobs:
   build:
     name: ${{ inputs.platform }}
-    runs-on: ${{ (inputs.platform == 'freebsd_amd64' || inputs.platform == 'linux_amd64') && 'ubuntu-24.04' || (inputs.platform == 'linux_arm64' && 'ubuntu-24.04-arm' || (inputs.platform == 'darwin_amd64' && 'macos-15-intel' || (inputs.platform == 'darwin_arm64' && 'macos-15' || 'unknown'))) }}
-    container: ${{ startsWith(inputs.platform, 'linux_') && fromJSON(format('{{"image":"ghcr.io/chrisnovakovic/alpine-builder:v3.22-csn.6"{0}}}', inputs.platform == 'linux_arm64' && ',"volumes":["/opt:/opt:rw,rshared","/opt:/__e/node24:ro,rshared"]' || '')) || null }}
-    steps:
+    runs-on: ${{ (inputs.platform == 'freebsd_amd64' || startsWith(inputs.platform, 'linux_') && 'ubuntu-24.04' || (inputs.platform == 'darwin_amd64' && 'macos-15-intel' || (inputs.platform == 'darwin_arm64' && 'macos-15' || 'unknown'))) }}
+    steps: 
       - name: Check out code
         uses: actions/checkout@v6
-      - name: Build please_pex binary
+      - name: Set up QEMU
+        if: ${{ inputs.platform == 'freebsd_amd64' || startsWith(inputs.platform, 'linux_' }}
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker
+        if: ${{ startsWith(inputs.platform, 'linux_' }}
+        uses: docker/setup-docker-action@v4
+        with:
+          daemon-config: |
+            {
+              "debug": true,
+              "features": {
+                "containerd-snapshotter": true
+              }
+            }
+      - name: Build please_pex binary (on freebsd-builder image)
+        if: ${{ inputs.platform == 'freebsd_amd64' }}
+        uses: cross-platform-actions/action@v0.30.0
+        with:
+          operating_system: freebsd
+          architecture: x86-64
+          version: '14.3'
+          image_url: https://github.com/please-build/freebsd-builder/releases/download/v0.12.0-please.3/freebsd-14.3-x86-64.qcow2
+          shell: bash
+          environment_variables: PLZ_ARGS
+          shutdown_vm: true
+          run: package/gha_release.sh //package:please_pex_${{ inputs.platform }}
+      - name: Build please_pex binary (in alpine-builder container)
+        if: ${{ startsWith(inputs.platform, 'linux_' }}
         run: |
-          ./pleasew build //package:please_pex_${{ inputs.platform }}
-          echo ARTIFACT_PATH="$(./pleasew query output //package:please_pex_${{ inputs.platform }})" >> $GITHUB_ENV
+          docker run --rm \
+            --platform ${{ inputs.platform == 'linux_amd64' && 'linux/amd64' || 'linux/arm64' }} \
+            -v "/home/runner/work:/home/runner/work" \
+            --env "GITHUB_ACTIONS=$GITHUB_ACTIONS" \
+            --env "GITHUB_ENV=$GITHUB_ENV" \
+            --workdir "$GITHUB_WORKSPACE" \
+            ghcr.io/please-build/alpine-builder:v3.22-please.4 \
+            /bin/bash package/gha_release.sh //package:please_pex_${{ inputs.platform }}
+      - name: Build please_pex binary (on host)
+        if ${{ startsWith(inputs.platform, 'darwin_' }}
+        run: package/gha_release.sh //package:please_pex_${{ inputs.platform }}
       - name: Upload please_pex binary to artifact storage
         uses: actions/upload-artifact@v5
         with:
