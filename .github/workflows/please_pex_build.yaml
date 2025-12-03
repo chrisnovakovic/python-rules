@@ -9,7 +9,7 @@ jobs:
   build:
     name: ${{ inputs.platform }}
     runs-on: ${{ (inputs.platform == 'freebsd_amd64' || inputs.platform == 'linux_amd64') && 'ubuntu-24.04' || (inputs.platform == 'linux_arm64' && 'ubuntu-24.04-arm' || (inputs.platform == 'darwin_amd64' && 'macos-15-intel' || (inputs.platform == 'darwin_arm64' && 'macos-15' || 'unknown'))) }}
-    container: ${{ startsWith(inputs.platform, 'linux_') && fromJSON(format('{{"image":"ghcr.io/please-build/alpine-builder:v3.22-please.3","options":"--platform {0}"}}', (inputs.platform == 'linux_amd64' && 'linux/amd64' || 'linux/arm64'))) || null }}
+    container: ${{ startsWith(inputs.platform, 'linux_') && 'ghcr.io/please-build/alpine-builder:v3.22-please.3' || null }}
     steps:
       - name: Check out code
         uses: actions/checkout@v6
