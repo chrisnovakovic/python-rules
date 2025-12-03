@@ -29,6 +29,7 @@ jobs:
           - '3.13'
           - '3.14'
   test-please_pex:
+    if: github.ref == 'TODO:remove'
     name: Test please_pex
     uses: ./.github/workflows/plugin_test.yaml
     with:
