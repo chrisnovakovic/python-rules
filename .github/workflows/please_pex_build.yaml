@@ -41,13 +41,14 @@ jobs:
       - name: Build please_pex binary (in alpine-builder container)
         if: ${{ startsWith(inputs.platform, 'linux_') }}
         run: |
+
           docker run --rm \
             --platform ${{ inputs.platform == 'linux_amd64' && 'linux/amd64' || 'linux/arm64' }} \
             -v "/home/runner/work:/home/runner/work" \
             --env "GITHUB_ACTIONS=$GITHUB_ACTIONS" \
             --env "GITHUB_ENV=$GITHUB_ENV" \
             --workdir "$GITHUB_WORKSPACE" \
-            ghcr.io/please-build/alpine-builder:v3.22-please.4 \
+            ghcr.io/please-build/alpine-builder:v3.22-please.3 \
             /bin/bash package/gha_release.sh //package:please_pex_${{ inputs.platform }}
       - name: Build please_pex binary (on host)
         if: ${{ startsWith(inputs.platform, 'darwin_') }}
