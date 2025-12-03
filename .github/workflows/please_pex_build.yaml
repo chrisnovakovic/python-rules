@@ -16,7 +16,7 @@ jobs:
         if: ${{ inputs.platform == 'freebsd_amd64' || startsWith(inputs.platform, 'linux_') }}
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker
-        if: ${{ startsWith(inputs.platform, 'linux_' }}
+        if: ${{ startsWith(inputs.platform, 'linux_') }}
         uses: docker/setup-docker-action@v4
         with:
           daemon-config: |
