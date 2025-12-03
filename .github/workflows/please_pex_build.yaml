@@ -39,7 +39,7 @@ jobs:
           shutdown_vm: true
           run: package/gha_release.sh //package:please_pex_${{ inputs.platform }}
       - name: Build please_pex binary (in alpine-builder container)
-        if: ${{ startsWith(inputs.platform, 'linux_' }}
+        if: ${{ startsWith(inputs.platform, 'linux_') }}
         run: |
           docker run --rm \
             --platform ${{ inputs.platform == 'linux_amd64' && 'linux/amd64' || 'linux/arm64' }} \
@@ -50,7 +50,7 @@ jobs:
             ghcr.io/please-build/alpine-builder:v3.22-please.4 \
             /bin/bash package/gha_release.sh //package:please_pex_${{ inputs.platform }}
       - name: Build please_pex binary (on host)
-        if: ${{ startsWith(inputs.platform, 'darwin_' }}
+        if: ${{ startsWith(inputs.platform, 'darwin_') }}
         run: package/gha_release.sh //package:please_pex_${{ inputs.platform }}
       - name: Upload please_pex binary to artifact storage
         uses: actions/upload-artifact@v5
