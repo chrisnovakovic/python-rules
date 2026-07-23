@@ -404,22 +404,9 @@ pip_library(
 )
 
 pip_library(
-    name = "progress",
-    licences = ["ISC"],
-    version = "1.5",
-)
-
-pip_library(
     name = "distlib",
     licences = ["PSF-2.0"],
     version = "0.4.3",
-)
-
-python_wheel(
-    name = "debugpy",
-    hashes = ["f058c204341fd7ff800ee0edafc106ca0fb1c9857e8a8895a6e04cca3ddcb7bf"],
-    licences = ["MIT"],
-    version = "1.5.0",
 )
 
 python_wheel(
