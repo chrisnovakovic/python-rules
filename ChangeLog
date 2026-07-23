@@ -1,3 +1,7 @@
+Version 2.1.0
+-------------
+    * Upgrade distlib to 0.4.3 for wheel_resolver compatibility with Python 3.12+ (#309)
+
 Version 2.0.2
 -------------
     * In preamble, search `PATH` when .pex is invoked at a relative path containing no `/` character (#299)
