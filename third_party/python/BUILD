@@ -233,12 +233,15 @@ python_wheel(
 
 python_wheel(
     name = "packaging",
-    hashes = ["29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484"],
+    hashes = ["5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e"],
     licences = [
         "Apache-2.0",
         "BSD-2-Clause",
     ],
-    version = "25.0",
+    # packaging is a dependency of //tools/verify_wheel_deps, so its own dependencies can't be
+    # verified - this is fine, given that it doesn't have any (and, by design, likely never will).
+    verify_deps = False,
+    version = "26.2",
 )
 
 pip_library(
@@ -463,16 +466,8 @@ python_library(
     ],
 )
 
-# Note: this is also used by //test:distribution_metadata_test as an example of a module that
-# contains distribution metadata. The importlib.metadata API should be able to identify the version
-# of the module from the contents of its .dist-info directory. The choice of module for that test is
-# fairly arbitrary - it just needs to be written in pure Python and have no dependencies.
 python_wheel(
     name = "pygments",
-    outs = [
-        "pygments",
-        "pygments-2.19.2.dist-info",
-    ],
     hashes = ["86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b"],
     licences = ["BSD-2-Clause"],
     version = "2.19.2",
