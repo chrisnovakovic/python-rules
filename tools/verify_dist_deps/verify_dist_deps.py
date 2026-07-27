@@ -70,7 +70,7 @@ def verify_requirements(
 
         # Ensure Requires-Python field is satisifed, if there is one.
         if target.requires_python and python_version not in target.requires_python:
-            unmet.append((dist_stack, target.requires_python))
+            unmet.append((dist_stack, target.requires_python, "Python version not satisfied"))
             return
         # Ensure all Requires-Dist fields are satisfied, if there are any.
         if target.requires_dist:
@@ -85,8 +85,9 @@ def verify_requirements(
                     continue
                 # Verify that at least one of the distributions in deps with this name satisfies the
                 # given version constraint.
-                chosen = next(filter(lambda d: d["metadata"].version in req.specifier, req_name))
-                if not chosen:
+                try:
+                    chosen = next(filter(lambda d: d["metadata"].version in req.specifier, deps[req_name]))
+                except StopIteration:
                     unmet.append((dist_stack, req, "version specifier not satisfied"))
                     continue
                 # Recursively verify the requirements of the chosen distribution, taking into
@@ -96,7 +97,10 @@ def verify_requirements(
                         _verify_requirements(chosen["metadata"], e, dist_stack)
                 else:
                     _verify_requirements(chosen["metadata"], "", dist_stack)
-                unused.remove(chosen["file"])
+                try:
+                    unused.remove(chosen["file"])
+                except KeyError:
+                    pass
 
     for target in targets:
         target_extras = (extras["*"] + extras[target.name]) or [""]
@@ -117,7 +121,7 @@ def build_arg_parser():
         "-x",
         "--deps-extensions",
         action="append",
-        default=["pex.zip", "whl"],
+        default=["whl"],
         metavar="EXT",
         help="only treat files beneath DIR with extension EXT as distribution archives",
     )

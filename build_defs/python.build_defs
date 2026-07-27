@@ -620,7 +620,7 @@ def python_wheel(
       tool (str): Tool to locate python wheel file in an index
     """
     binary = binary or entry_points
-    package_name = package_name or name.replace('-', '_')
+    package_name = package_name or name.replace("-", "_").replace(".", "_")
     if outs is None:
         outs = [name]
     outs += [f"{package_name}-{version}.dist-info"]
@@ -674,7 +674,6 @@ def python_wheel(
         )
 
     if verify_deps:
-        module_path = module_dir.replace(".", "/")
         if isinstance(extras, list):
             extra_args = " ".join([f"-e '*.{e}'" for e in extras])
         elif isinstance(extras, dict):
@@ -691,14 +690,14 @@ def python_wheel(
             tag = "verify_deps",
             srcs = [file_rule],
             building_description = "Verifying dependencies...",
-            cmd = f"$TOOLS_PYTHON $TOOLS_VERIFY -u -m {module_path} {extra_args} -- $SRCS .",
+            cmd = f"$TOOLS_PYTHON $TOOLS_VERIFY -u {extra_args} -- $SRCS .",
             needs_transitive_deps = True,
             post_build = verify_deps_post,
-            requires = ["py"],
+            requires = ["py_whl_with_deps"],
             test_only = test_only,
             tools = {
                 "python": [interpreter],
-                "verify": ["///python//tools/verify_dist_deps"],
+                "verify": ["///python//tools/verify_dist_deps"], # TODO: clean up
             },
             deps = deps,
         )
@@ -721,6 +720,15 @@ def python_wheel(
         "$TOOLS_ARCAT z -d --prefix $PKG -i " + " -i ".join(outs),
     ]
     label = f'whl:{package_name}=={version}'
+
+    file_with_deps_rule = filegroup(
+        name = name,
+        tag = "file_with_deps",
+        srcs = [file_rule],
+        needs_transitive_deps = True,
+        requires = ["py_whl_with_deps"],
+        deps = deps,
+    )
 
     wheel_rule = build_rule(
         name = name,
@@ -766,6 +774,7 @@ def python_wheel(
         provides = {
             "py": wheel_rule,
             "py_whl": file_rule,
+            "py_whl_with_deps": file_with_deps_rule,
         },
     )
     if binary:
