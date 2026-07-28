@@ -639,6 +639,7 @@ def python_wheel(
             scheme.format(url_base=url_base, package_name=package_name, initial=initial, version=version)
             for scheme in name_scheme
         ]
+    mod = strip or patch or post_install_commands
 
     file_rule = None
     if tool:
@@ -650,7 +651,7 @@ def python_wheel(
         file_rule = build_rule(
             name = name,
             tag = 'download',
-            outs = [name + '.whl'],
+            outs = [tag(name, "download") + ".whl"] if mod else [name + ".whl"],
             cmd = cmd,
             tools = {
                 "resolver": [tool],
@@ -667,11 +668,51 @@ def python_wheel(
         file_rule = remote_file(
             name = name,
             _tag = 'download',
-            out = name + '.whl',
+            out = (tag(name, "download") + ".whl") if mod else (name + ".whl"),
             url = urls,
             hashes = hashes,
+            labels = ["python_wheel_download"],
             licences = licences if licences else None,
         )
+
+    if mod:
+        mod_res = []
+        mod_cmd = [
+            "mkdir _tmp",
+            "cd _tmp",
+            "$TOOL x ../$SRCS_WHEEL",
+        ]
+        if strip:
+            mod_cmd += ["find . %s | xargs rm -rf" % " -or ".join(['-name "%s"' % s for s in strip])]
+        if patch:
+            patches, c = _patch_cmd(patch)
+            mod_res += patches
+            mod_cmd += c
+        if post_install_commands:
+            mod_cmd += post_install_commands
+        mod_cmd += [
+            "$TOOL z -o ../$OUTS -d " + " ".join([f"-i {o}" for o in outs]),
+        ]
+        mod_file_rule = build_rule(
+            name = name,
+            tag = "mod_download",
+            srcs = {
+                "wheel": [file_rule],
+                "res": mod_res,
+            },
+            outs = [name + ".whl"],
+            cmd = " && ".join(mod_cmd),
+            tools = [CONFIG.ARCAT_TOOL],
+        )
+
+    file_with_deps_rule = filegroup(
+        name = name,
+        tag = "download_with_deps",
+        srcs = [mod_file_rule or file_rule],
+        needs_transitive_deps = True,
+        requires = ["py_whl_with_deps"],
+        deps = deps,
+    )
 
     if verify_deps:
         if isinstance(extras, list):
@@ -688,7 +729,7 @@ def python_wheel(
         verify_rule = build_rule(
             name = name,
             tag = "verify_deps",
-            srcs = [file_rule],
+            srcs = [file_with_deps_rule],
             building_description = "Verifying dependencies...",
             cmd = f"$TOOLS_PYTHON $TOOLS_VERIFY -u {extra_args} -- $SRCS .",
             needs_transitive_deps = True,
@@ -703,17 +744,9 @@ def python_wheel(
         )
 
     cmd = ["$TOOLS_ARCAT x $SRCS_SRC"]
-    if strip:
-        cmd += ['find . %s | xargs rm -rf' % ' -or '.join(['-name "%s"' % s for s in strip])]
     if not licences:
         cmd += ['find . -name METADATA -or -name PKG-INFO | grep -v "^./build/" | '
                 'xargs grep -hE "License ?:" | grep -v UNKNOWN | cat || true']
-    if patch:
-        patches, c = _patch_cmd(patch)
-        cmd += c
-    if post_install_commands:
-        cmd += post_install_commands
-
     cmd += [
         # N.B. we need -b for legacy locations because that's all zipimport knows to look for :(
         "$TOOLS_PYTHON -m compileall -b -f .",
@@ -721,23 +754,13 @@ def python_wheel(
     ]
     label = f'whl:{package_name}=={version}'
 
-    file_with_deps_rule = filegroup(
-        name = name,
-        tag = "file_with_deps",
-        srcs = [file_rule],
-        needs_transitive_deps = True,
-        requires = ["py_whl_with_deps"],
-        deps = deps,
-    )
-
     wheel_rule = build_rule(
         name = name,
         tag = 'wheel',
         cmd = ' && '.join(cmd),
         outs = [name + '.pex.zip'],
         srcs = {
-            "src": [file_rule],
-            "res": patches if patch else [],
+            "src": [mod_file_rule or file_rule],
         },
         building_description = 'Repackaging...',
         requires = ['py'],
@@ -773,7 +796,7 @@ def python_wheel(
         labels = labels + [label] + ["link:plz-out/python/venv"],
         provides = {
             "py": wheel_rule,
-            "py_whl": file_rule,
+            "py_whl": mod_file_rule or file_rule,
             "py_whl_with_deps": file_with_deps_rule,
         },
     )
@@ -805,7 +828,7 @@ def python_wheel(
             entry_points = {k: f"{k}.pex" for k in entry_points.keys()},
             provides = {
                 "py": wheel_rule, # So things can still depend on this as a library
-                "py_whl": file_rule,
+                "py_whl": mod_file_rule or file_rule,
             },
             binary=True,
             test_only=test_only,
@@ -876,9 +899,9 @@ def _patch_cmd(patch):
     if CONFIG.HOSTOS == 'freebsd':
         # --no-backup-if-mismatch is not supported, but we need to get rid of the .orig
         # files for hashes to match correctly.
-        return patches, [f'patch -p0 < $(location {patch})' for patch in patches] + ['find . -name "*.orig" | xargs rm']
+        return patches, [f'patch -p0 < $TMP_DIR/$(location {patch})' for patch in patches] + ['find . -name "*.orig" | xargs rm']
     else:
-        return patches, [f'patch -p0 --no-backup-if-mismatch < $(location {patch})' for patch in patches]
+        return patches, [f'patch -p0 --no-backup-if-mismatch < $TMP_DIR/$(location {patch})' for patch in patches]
 
 
 def _handle_zip_safe(name):
